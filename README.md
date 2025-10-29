@@ -1,4 +1,4 @@
-🧠 Smartgroup
+🧠 GroupWise
 
 Task & Group Divider/Assigner | Built in Pure Python with Tkinter UI
 
