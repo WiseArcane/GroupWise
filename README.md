@@ -25,7 +25,3 @@ UI Framework: Tkinter
 🔧 Future Enhancements
 
 Data export (CSV or JSON)
-
-Progress tracking per group
-
-Custom themes and layouts
