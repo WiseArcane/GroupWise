@@ -25,3 +25,8 @@ UI Framework: Tkinter
 🔧 Future Enhancements
 
 Data export (CSV or JSON)
+
+⚠️IMPORTANT MUST INSTALL PILLOW⚠️
+Write this command in shell/terminal
+
+"pip install Pillow"
