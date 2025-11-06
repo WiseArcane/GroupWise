@@ -26,7 +26,8 @@ UI Framework: Tkinter
 
 Data export (CSV or JSON)
 
-⚠️IMPORTANT MUST INSTALL PILLOW⚠️
+⚠️IMPORTANT MUST INSTALL PILLOW and CUSTOMTKINTER⚠️
 Write this command in shell/terminal
 
 "pip install Pillow"
+"pip install customtkinter"
