@@ -20,7 +20,7 @@ Smartgroup is a simple yet efficient desktop tool designed to help users organiz
 
 Language: Python
 
-UI Framework: Tkinter
+UI Framework: Tkinter/customTkinter
 
 🔧 Future Enhancements
 
