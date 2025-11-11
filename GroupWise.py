@@ -31,7 +31,7 @@ class GroupWiseApp(customtkinter.CTk):
         for F in (WelcomePage, InputPage, ResultPage):
             page_name = F.__name__
             color = "white"
-            # Use default color for other pages
+            #default color
             if F is not WelcomePage:
                 color = self.cget("fg_color")
             frame = F(parent=container, controller=self, fg_color=color)
@@ -257,3 +257,4 @@ class ResultPage(customtkinter.CTkFrame):
 if __name__ == "__main__":
     app = GroupWiseApp()
     app.mainloop()
+
