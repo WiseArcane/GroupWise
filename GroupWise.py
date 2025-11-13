@@ -202,41 +202,48 @@ class InputPage(customtkinter.CTkFrame):
             messagebox.showerror("Error", "Please enter at least one task.")
             return
 
-        random.shuffle(members)
-        random.shuffle(tasks)
-
         assignments = []
 
         if num_groups > 0:
+            # Logic for when groups are specified: Distribute tasks within each group
             if num_groups > len(members):
                 messagebox.showwarning("Warning", "Number of groups is greater than the number of members. Some groups will be empty.")
-            groups = [[] for _ in range(num_groups)]
+
+            # 1. Divide members into groups
+            groups = {f"Group {i+1}": [] for i in range(num_groups)}
             for i, member in enumerate(members):
-                groups[i % num_groups].append(member)
+                groups[f"Group {i % num_groups + 1}"].append(member)
 
-            #Create a shared task pool for all groups.
-            num_total_members = len(members)
-            extended_tasks = []
-            if num_total_members > len(tasks):
-                num_repeats = num_total_members // len(tasks)
-                remainder = num_total_members % len(tasks)
-                extended_tasks.extend(tasks * num_repeats)
-                extended_tasks.extend(tasks[:remainder])
-            else:
-                extended_tasks = tasks[:num_total_members]
-            random.shuffle(extended_tasks)
+            # 2. For each group, distribute all tasks among its members
+            for group_name, group_members in groups.items():
+                if not group_members:
+                    continue
+                
+                random.shuffle(tasks)
+                member_tasks = {member: [] for member in group_members}
 
-            task_idx = 0
-            for i, group in enumerate(groups):
-                if not group: continue
-                for member in group:
-                    task = extended_tasks[task_idx]
-                    task_idx += 1
-                    assignments.append((f"Group {i+1}", member, task))
+                # Assign all tasks to members within this group
+                for i, task in enumerate(tasks):
+                    member_in_group = group_members[i % len(group_members)]
+                    member_tasks[member_in_group].append(task)
+
+                # Format for final list
+                for member, assigned_tasks in member_tasks.items():
+                    tasks_str = ", ".join(assigned_tasks) if assigned_tasks else ""
+                    assignments.append((group_name, member, tasks_str))
         else:
-            for i, member in enumerate(members):
-                task = tasks[i % len(tasks)]
-                assignments.append(("-", member, task))
+            # Original logic for when no groups are specified
+            random.shuffle(tasks)
+            member_tasks = {member: [] for member in members}
+            
+            # Assign all tasks across all members
+            for i, task in enumerate(tasks):
+                member = members[i % len(members)]
+                member_tasks[member].append(task)
+
+            for member, assigned_tasks in member_tasks.items():
+                tasks_str = ", ".join(assigned_tasks) if assigned_tasks else ""
+                assignments.append(("-", member, tasks_str))
 
         result_page.populate_table(assignments)
         self.controller.show_frame("ResultPage")
@@ -246,6 +253,7 @@ class ResultPage(customtkinter.CTkFrame):
     def __init__(self, parent, controller, **kwargs):
         super().__init__(parent, **kwargs)
         self.controller = controller
+        self.assignments = [] # To store assignment data for saving
 
         #Central frame to hold all widgets
         main_frame = customtkinter.CTkFrame(self, fg_color="transparent")
@@ -253,31 +261,8 @@ class ResultPage(customtkinter.CTkFrame):
 
         customtkinter.CTkLabel(main_frame, text="Task Assignments", font=("Arial", 26, "bold")).pack(pady=25)
 
-        table_frame = customtkinter.CTkFrame(main_frame, fg_color="transparent")
-        table_frame.pack(pady=10, padx=20, expand=True)
-
-        columns = ("Group", "Member", "Task")
-        self.result_table = ttk.Treeview(table_frame, columns=columns, show="headings", height=18)
-        self.result_table.heading("Group", text="Group")
-        self.result_table.heading("Member", text="Member")
-        self.result_table.heading("Task", text="Assigned Task")
-
-        style = ttk.Style()
-        style.theme_use("clam")
-        style.configure("Treeview", background="#f0f0f0", foreground="black", rowheight=30, fieldbackground="#f0f0f0", font=("Arial", 12))
-        style.configure("Treeview.Heading", font=("Arial", 14, "bold"))
-        style.map('Treeview', background=[('selected', '#347083')])
-        self.result_table.tag_configure('oddrow', background='#E8E8E8')
-        self.result_table.tag_configure('evenrow', background='#DFDFDF')
-
-        self.result_table.column("Group", width=100, anchor="center")
-        self.result_table.column("Member", width=300)
-        self.result_table.column("Task", width=400)
-
-        result_scrollbar = ttk.Scrollbar(table_frame, orient="vertical", command=self.result_table.yview)
-        self.result_table.configure(yscrollcommand=result_scrollbar.set)
-        result_scrollbar.pack(side="right", fill="y")
-        self.result_table.pack(side="left")
+        self.result_frame = customtkinter.CTkScrollableFrame(main_frame, width=800, height=500)
+        self.result_frame.pack(pady=10, padx=20, fill="both", expand=True)
 
         #Bottom Buttons
         bottom_buttons = customtkinter.CTkFrame(main_frame, fg_color="transparent")
@@ -289,14 +274,34 @@ class ResultPage(customtkinter.CTkFrame):
         customtkinter.CTkButton(bottom_buttons, text="Exit", command=controller.quit, fg_color="#d9534f", hover_color="#c82333", font=("Arial", 18, "bold"), width=150, height=40).grid(row=0, column=3, padx=10)
 
     def clear_table(self):
-        for widget in self.result_table.get_children():
-            self.result_table.delete(widget)
+        # Destroy all widgets inside the scrollable frame
+        for widget in self.result_frame.winfo_children():
+            widget.destroy()
 
     def populate_table(self, assignments):
-        for i, (group, member, task) in enumerate(assignments):
-            tag = 'evenrow' if i % 2 == 0 else 'oddrow'
-            self.result_table.insert("", "end", values=(group, member, task), tags=(tag,))
+        self.clear_table()
+        self.assignments = assignments # Store for saving
 
+        # Group members by group name
+        grouped_results = {}
+        for group, member, task in assignments:
+            if group not in grouped_results:
+                grouped_results[group] = []
+            grouped_results[group].append((member, task))
+
+        # Sort groups (e.g., "Group 1", "Group 2", ...)
+        sorted_groups = sorted(grouped_results.keys(), key=lambda g: (g.split()[0], int(g.split()[1]) if g.startswith("Group") and g.split()[1].isdigit() else g))
+
+        for group_name in sorted_groups:
+            # Add group header
+            group_label = customtkinter.CTkLabel(self.result_frame, text=f"{group_name}:", font=("Arial", 20, "bold"))
+            group_label.pack(anchor="w", padx=10, pady=(15, 5))
+
+            for member, task in grouped_results[group_name]:
+                task_display = task if task else "No task assigned"
+                member_label = customtkinter.CTkLabel(self.result_frame, text=f"  - {member} → {task_display}", font=("Arial", 16))
+                member_label.pack(anchor="w", padx=20)
+        
     def save_results(self):
         file_path = filedialog.asksaveasfilename(
             defaultextension=".json",
@@ -307,9 +312,8 @@ class ResultPage(customtkinter.CTkFrame):
             return
 
         assignments_data = []
-        for item in self.result_table.get_children():
-            values = self.result_table.item(item, 'values')
-            assignment = {"Group": values[0], "Member": values[1], "Task": values[2]}
+        for group, member, task in self.assignments:
+            assignment = {"Group": group, "Member": member, "Task": task}
             assignments_data.append(assignment)
 
         try:
