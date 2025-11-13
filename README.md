@@ -28,4 +28,5 @@ UI Framework: Tkinter / customTkinter
 Install dependencies before running:
 
 pip install Pillow
+
 pip install customtkinter
