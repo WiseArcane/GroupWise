@@ -128,6 +128,7 @@ class InputPage(customtkinter.CTkFrame):
         member_frame = customtkinter.CTkFrame(input_frame, fg_color="transparent")
         customtkinter.CTkLabel(member_frame, text="Members", font=("Arial", 16, "bold")).pack()
         self.member_text = customtkinter.CTkTextbox(member_frame, width=300, height=300, font=("Arial", 14))
+        self.member_text.bind("<Button-3>", self.show_context_menu)
         self.member_text.pack(padx=10, pady=5)
         member_frame.grid(row=0, column=0, padx=25)
 
@@ -135,6 +136,7 @@ class InputPage(customtkinter.CTkFrame):
         task_frame = customtkinter.CTkFrame(input_frame, fg_color="transparent")
         customtkinter.CTkLabel(task_frame, text="Tasks", font=("Arial", 16, "bold")).pack()
         self.task_text = customtkinter.CTkTextbox(task_frame, width=300, height=300, font=("Arial", 14))
+        self.task_text.bind("<Button-3>", self.show_context_menu)
         self.task_text.pack(padx=10, pady=(5,10))
         task_frame.grid(row=0, column=1, padx=25)
 
@@ -150,6 +152,23 @@ class InputPage(customtkinter.CTkFrame):
         button_frame.pack(pady=30)
         customtkinter.CTkButton(button_frame, text="BACK", command=lambda: controller.show_frame("WelcomePage"), fg_color="#d3d3d3", text_color="black", hover_color="#c0c0c0", font=("Arial", 18, "bold"), width=150, height=40).grid(row=0, column=0, padx=15)
         customtkinter.CTkButton(button_frame, text="ASSIGN TASKS", command=self.assign_tasks, font=("Arial", 18, "bold"), width=150, height=40).grid(row=0, column=1, padx=15)
+
+    def show_context_menu(self, event):
+        widget = event.widget
+        context_menu = tk.Menu(widget, tearoff=0)
+        
+        has_selection = False
+        try:
+            if widget.tag_ranges("sel"):
+                has_selection = True
+        except tk.TclError: #Nothing selected
+            pass 
+
+        context_menu.add_command(label="Copy", command=lambda: widget.event_generate("<<Copy>>"), state=tk.NORMAL if has_selection else tk.DISABLED)
+        context_menu.add_command(label="Paste", command=lambda: widget.event_generate("<<Paste>>"))
+        
+        context_menu.tk_popup(event.x_root, event.y_root)
+
 
     def assign_tasks(self):
         result_page = self.controller.frames["ResultPage"]
@@ -194,22 +213,30 @@ class InputPage(customtkinter.CTkFrame):
             groups = [[] for _ in range(num_groups)]
             for i, member in enumerate(members):
                 groups[i % num_groups].append(member)
+
+            #Create a shared task pool for all groups.
+            num_total_members = len(members)
+            extended_tasks = []
+            if num_total_members > len(tasks):
+                num_repeats = num_total_members // len(tasks)
+                remainder = num_total_members % len(tasks)
+                extended_tasks.extend(tasks * num_repeats)
+                extended_tasks.extend(tasks[:remainder])
+            else:
+                extended_tasks = tasks[:num_total_members]
+            random.shuffle(extended_tasks)
+
+            task_idx = 0
             for i, group in enumerate(groups):
                 if not group: continue
-                shuffled_tasks = tasks[:]
-                random.shuffle(shuffled_tasks)
-                for j, member in enumerate(group):
-                    task = shuffled_tasks[j % len(shuffled_tasks)]
+                for member in group:
+                    task = extended_tasks[task_idx]
+                    task_idx += 1
                     assignments.append((f"Group {i+1}", member, task))
         else:
-            if len(tasks) > len(members):
-                for i, task in enumerate(tasks):
-                    member = members[i % len(members)]
-                    assignments.append(("-", member, task))
-            else:
-                for i, member in enumerate(members):
-                    task = tasks[i % len(tasks)]
-                    assignments.append(("-", member, task))
+            for i, member in enumerate(members):
+                task = tasks[i % len(tasks)]
+                assignments.append(("-", member, task))
 
         result_page.populate_table(assignments)
         self.controller.show_frame("ResultPage")
