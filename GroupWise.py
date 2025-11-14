@@ -205,16 +205,16 @@ class InputPage(customtkinter.CTkFrame):
         assignments = []
 
         if num_groups > 0:
-            # Logic for when groups are specified: Distribute tasks within each group
+            #Logic for when groups are specified: Distribute tasks within each group
             if num_groups > len(members):
                 messagebox.showwarning("Warning", "Number of groups is greater than the number of members. Some groups will be empty.")
 
-            # 1. Divide members into groups
+            #step 1. Divide members into groups
             groups = {f"Group {i+1}": [] for i in range(num_groups)}
             for i, member in enumerate(members):
                 groups[f"Group {i % num_groups + 1}"].append(member)
 
-            # 2. For each group, distribute all tasks among its members
+            #step 2. For each group, distribute all tasks among its members
             for group_name, group_members in groups.items():
                 if not group_members:
                     continue
@@ -222,21 +222,21 @@ class InputPage(customtkinter.CTkFrame):
                 random.shuffle(tasks)
                 member_tasks = {member: [] for member in group_members}
 
-                # Assign all tasks to members within this group
+                #Assign all tasks to members within this group
                 for i, task in enumerate(tasks):
                     member_in_group = group_members[i % len(group_members)]
                     member_tasks[member_in_group].append(task)
 
-                # Format for final list
+                #Format for final list
                 for member, assigned_tasks in member_tasks.items():
                     tasks_str = ", ".join(assigned_tasks) if assigned_tasks else ""
                     assignments.append((group_name, member, tasks_str))
         else:
-            # Original logic for when no groups are specified
+            #Original logic for when no groups are specified
             random.shuffle(tasks)
             member_tasks = {member: [] for member in members}
             
-            # Assign all tasks across all members
+            #Assign all tasks across all members
             for i, task in enumerate(tasks):
                 member = members[i % len(members)]
                 member_tasks[member].append(task)
@@ -253,7 +253,7 @@ class ResultPage(customtkinter.CTkFrame):
     def __init__(self, parent, controller, **kwargs):
         super().__init__(parent, **kwargs)
         self.controller = controller
-        self.assignments = [] # To store assignment data for saving
+        self.assignments = [] #To store assignment data for saving
 
         #Central frame to hold all widgets
         main_frame = customtkinter.CTkFrame(self, fg_color="transparent")
@@ -274,26 +274,26 @@ class ResultPage(customtkinter.CTkFrame):
         customtkinter.CTkButton(bottom_buttons, text="Exit", command=controller.quit, fg_color="#d9534f", hover_color="#c82333", font=("Arial", 18, "bold"), width=150, height=40).grid(row=0, column=3, padx=10)
 
     def clear_table(self):
-        # Destroy all widgets inside the scrollable frame
+        #Destroy all widgets inside the scrollable frame
         for widget in self.result_frame.winfo_children():
             widget.destroy()
 
     def populate_table(self, assignments):
         self.clear_table()
-        self.assignments = assignments # Store for saving
+        self.assignments = assignments #Store for saving
 
-        # Group members by group name
+        #Group members by group name
         grouped_results = {}
         for group, member, task in assignments:
             if group not in grouped_results:
                 grouped_results[group] = []
             grouped_results[group].append((member, task))
 
-        # Sort groups (e.g., "Group 1", "Group 2", ...)
+        #Sort groups (e.g., "Group 1", "Group 2", ...)
         sorted_groups = sorted(grouped_results.keys(), key=lambda g: (g.split()[0], int(g.split()[1]) if g.startswith("Group") and g.split()[1].isdigit() else g))
 
         for group_name in sorted_groups:
-            # Add group header
+            #Add group header
             group_label = customtkinter.CTkLabel(self.result_frame, text=f"{group_name}:", font=("Arial", 20, "bold"))
             group_label.pack(anchor="w", padx=10, pady=(15, 5))
 
@@ -327,3 +327,4 @@ class ResultPage(customtkinter.CTkFrame):
 if __name__ == "__main__":
     app = GroupWiseApp()
     app.mainloop()
+
