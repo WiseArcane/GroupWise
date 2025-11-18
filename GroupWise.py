@@ -4,6 +4,7 @@ import random
 import os
 import json
 from tkinter import ttk, filedialog
+from datetime import datetime
 from PIL import Image, ImageTk
 from tkinter import messagebox
 
@@ -403,17 +404,23 @@ class ResultPage(customtkinter.CTkFrame):
 
         date_entry = customtkinter.CTkEntry(
             popup,
-            placeholder_text="YYYY-MM-DD",
+            placeholder_text="MM/DD/YYYY",
             width=180
         )
         date_entry.pack(pady=10)
 
         def confirm_deadline():
             deadline = date_entry.get().strip()
-            if deadline:
+            if not deadline:
+                messagebox.showerror("Error", "Deadline cannot be empty.", parent=popup)
+                return
+            try:
+                datetime.strptime(deadline, '%m/%d/%Y')
                 self.deadline_value = deadline
                 self.deadline_label.configure(text=f"Deadline: {deadline}")
                 popup.destroy()
+            except ValueError:
+                messagebox.showerror("Error", "Invalid date format. Please use MM/DD/YYYY.", parent=popup)
 
         customtkinter.CTkButton(
             popup,
