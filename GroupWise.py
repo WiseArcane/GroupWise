@@ -4,6 +4,7 @@ import random
 import os
 import json
 from tkinter import ttk, filedialog
+from datetime import datetime
 from PIL import Image, ImageTk
 from tkinter import messagebox
 
@@ -89,7 +90,7 @@ class WelcomePage(customtkinter.CTkFrame):
         super().__init__(parent, **kwargs)
         self.controller = controller
         
-        # entral frame to hold all widgets
+        #Central frame to hold all widgets
         main_frame = customtkinter.CTkFrame(self, fg_color="transparent")
         main_frame.place(relx=0.5, rely=0.45, anchor="center")
         
@@ -150,8 +151,20 @@ class InputPage(customtkinter.CTkFrame):
         #Button Frame
         button_frame = customtkinter.CTkFrame(main_frame, fg_color="transparent")
         button_frame.pack(pady=30)
-        customtkinter.CTkButton(button_frame, text="BACK", command=lambda: controller.show_frame("WelcomePage"), fg_color="#d3d3d3", text_color="black", hover_color="#c0c0c0", font=("Arial", 18, "bold"), width=150, height=40).grid(row=0, column=0, padx=15)
-        customtkinter.CTkButton(button_frame, text="ASSIGN TASKS", command=self.assign_tasks, font=("Arial", 18, "bold"), width=150, height=40).grid(row=0, column=1, padx=15)
+        customtkinter.CTkButton(button_frame, text="Back", command=lambda: controller.show_frame("WelcomePage"), fg_color="#d3d3d3", text_color="black", hover_color="#c0c0c0", font=("Arial", 18, "bold"), width=150, height=40).grid(row=0, column=0, padx=10)
+        customtkinter.CTkButton(button_frame, text="Load JSON", command=self.load_from_json, font=("Arial", 18, "bold"), width=150, height=40, fg_color="#F39C12", hover_color="#E67E22").grid(row=0, column=1, padx=10)
+        customtkinter.CTkButton(button_frame, text="Assign task", command=self.assign_tasks, font=("Arial", 18, "bold"), width=150, height=40).grid(row=0, column=2, padx=10)
+
+    def load_from_json(self):
+        file_path = filedialog.askopenfilename(
+            title="Select a JSON file",
+            filetypes=[("JSON files", "*.json"), ("All files", "*.*")]
+        )
+        if not file_path:
+            return
+
+        self.populate_from_file(file_path)
+
 
     def show_context_menu(self, event):
         widget = event.widget
@@ -169,6 +182,39 @@ class InputPage(customtkinter.CTkFrame):
         
         context_menu.tk_popup(event.x_root, event.y_root)
 
+    def populate_from_file(self, file_path):
+        try:
+            with open(file_path, 'r') as f:
+                data = json.load(f)
+
+            members = set()
+            tasks = set()
+            groups = set()
+
+            for item in data:
+                if item.get("Member"):
+                    members.add(item["Member"])
+                if item.get("Task"):
+                    #A member can have multiple tasks, comma-separated
+                    for task in item["Task"].split(','):
+                        task = task.strip()
+                        if task:
+                            tasks.add(task)
+                if item.get("Group") and item["Group"] != "-":
+                    groups.add(item["Group"])
+
+            #Clear existing content
+            self.member_text.delete("1.0", "end")
+            self.task_text.delete("1.0", "end")
+            self.group_entry.delete(0, "end")
+
+            #Populate widgets
+            self.member_text.insert("1.0", "\n".join(sorted(list(members))))
+            self.task_text.insert("1.0", "\n".join(sorted(list(tasks))))
+            if groups:
+                self.group_entry.insert(0, str(len(groups)))
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to load or parse file: {e}")
 
     def assign_tasks(self):
         result_page = self.controller.frames["ResultPage"]
@@ -206,16 +252,16 @@ class InputPage(customtkinter.CTkFrame):
 
         if num_groups > 0:
             random.shuffle(members)
-            # Logic for when groups are specified: Distribute tasks within each group
+            #Logic for when groups are specified: Distribute tasks within each group
             if num_groups > len(members):
                 messagebox.showwarning("Warning", "Number of groups is greater than the number of members. Some groups will be empty.")
 
-            # 1. Divide members into groups
+            #step1. Divide members into groups
             groups = {f"Group {i+1}": [] for i in range(num_groups)}
             for i, member in enumerate(members):
                 groups[f"Group {i % num_groups + 1}"].append(member)
 
-            # 2. For each group, distribute all tasks among its members
+            #step2. For each group, distribute all tasks among its members
             for group_name, group_members in groups.items():
                 if not group_members:
                     continue
@@ -223,25 +269,37 @@ class InputPage(customtkinter.CTkFrame):
                 random.shuffle(tasks)
                 member_tasks = {member: [] for member in group_members}
 
-                # Assign all tasks to members within this group
-                for i, task in enumerate(tasks):
-                    member_in_group = group_members[i % len(group_members)]
-                    member_tasks[member_in_group].append(task)
+                #If there are more members than tasks, iterate through members to ensure everyone gets a task.
+                if len(group_members) > len(tasks):
+                    for i, member in enumerate(group_members):
+                        task_to_assign = tasks[i % len(tasks)]
+                        member_tasks[member].append(task_to_assign)
+                else:
+                    #If there are more (or equal) tasks than members, iterate through tasks to distribute them all.
+                    for i, task in enumerate(tasks):
+                        member_to_assign = group_members[i % len(group_members)]
+                        member_tasks[member_to_assign].append(task)
 
-                # Format for final list
+                #Format for final list
                 for member, assigned_tasks in member_tasks.items():
                     tasks_str = ", ".join(assigned_tasks) if assigned_tasks else ""
                     assignments.append((group_name, member, tasks_str))
         else:
-            # Original logic for when no groups are specified
+            #Logic for when no groups are specified
             random.shuffle(members)
             random.shuffle(tasks)
             member_tasks = {member: [] for member in members}
             
-            # Assign all tasks across all members
-            for i, task in enumerate(tasks):
-                member = members[i % len(members)]
-                member_tasks[member].append(task)
+            #If there are more members than tasks, iterate through members to ensure everyone gets a task.
+            if len(members) > len(tasks):
+                for i, member in enumerate(members):
+                    task_to_assign = tasks[i % len(tasks)]
+                    member_tasks[member].append(task_to_assign)
+            else:
+                #If there are more (or equal) tasks than members, iterate through tasks to distribute them all.
+                for i, task in enumerate(tasks):
+                    member_to_assign = members[i % len(members)]
+                    member_tasks[member_to_assign].append(task)
 
             for member, assigned_tasks in member_tasks.items():
                 tasks_str = ", ".join(assigned_tasks) if assigned_tasks else ""
@@ -255,55 +313,170 @@ class ResultPage(customtkinter.CTkFrame):
     def __init__(self, parent, controller, **kwargs):
         super().__init__(parent, **kwargs)
         self.controller = controller
-        self.assignments = [] # To store assignment data for saving
+        self.assignments = []  #Store assignment data
+        self.deadline_value = None  #Store selected deadline
 
-        #Central frame to hold all widgets
+        #Central frame
         main_frame = customtkinter.CTkFrame(self, fg_color="transparent")
         main_frame.pack(expand=True)
 
-        customtkinter.CTkLabel(main_frame, text="Task Assignments", font=("Arial", 26, "bold")).pack(pady=25)
+        customtkinter.CTkLabel(
+            main_frame,
+            text="Task Assignments",
+            font=("Arial", 26, "bold")
+        ).pack(pady=25)
 
+        #Deadline label
+        self.deadline_label = customtkinter.CTkLabel(
+            main_frame,
+            text="Deadline: Not set",
+            font=("Arial", 16)
+        )
+        self.deadline_label.pack(pady=(0, 10))
+
+        #Set Deadline button
+        customtkinter.CTkButton(
+            main_frame,
+            text="Set Deadlines",
+            font=("Arial", 16, "bold"),
+            width=160,
+            height=35,
+            fg_color="#1ABC9C",
+            hover_color="#16A085",
+            text_color="black",
+            command=self.open_deadline_popup
+        ).pack(pady=(0, 10))
+
+        #Scrollable Frame for results
         self.result_frame = customtkinter.CTkScrollableFrame(main_frame, width=800, height=500)
         self.result_frame.pack(pady=10, padx=20, fill="both", expand=True)
 
         #Bottom Buttons
         bottom_buttons = customtkinter.CTkFrame(main_frame, fg_color="transparent")
         bottom_buttons.pack(pady=20)
-        
-        customtkinter.CTkButton(bottom_buttons, text="Back", command=lambda: controller.show_frame("InputPage"), fg_color="#d3d3d3", text_color="black", hover_color="#c0c0c0", font=("Arial", 18, "bold"), width=150, height=40).grid(row=0, column=0, padx=10)
-        customtkinter.CTkButton(bottom_buttons, text="Save", command=self.save_results, fg_color="#28a745", hover_color="#218838", font=("Arial", 18, "bold"), width=150, height=40).grid(row=0, column=1, padx=10)
-        customtkinter.CTkButton(bottom_buttons, text="Re-randomize", command=lambda: controller.frames["InputPage"].assign_tasks(), fg_color="#ffc107", text_color="black", hover_color="#e0a800", font=("Arial", 18, "bold"), width=150, height=40).grid(row=0, column=2, padx=10)
-        customtkinter.CTkButton(bottom_buttons, text="Exit", command=controller.quit, fg_color="#d9534f", hover_color="#c82333", font=("Arial", 18, "bold"), width=150, height=40).grid(row=0, column=3, padx=10)
+
+        customtkinter.CTkButton(
+            bottom_buttons,
+            text="Back",
+            fg_color="#d3d3d3",
+            text_color="black",
+            hover_color="#c0c0c0",
+            font=("Arial", 18, "bold"),
+            width=150,
+            height=40,
+            command=lambda: controller.show_frame("InputPage")
+        ).grid(row=0, column=0, padx=10)
+
+        customtkinter.CTkButton(
+            bottom_buttons,
+            text="Save",
+            fg_color="#28a745",
+            hover_color="#218838",
+            font=("Arial", 18, "bold"),
+            width=150,
+            height=40,
+            command=self.save_results
+        ).grid(row=0, column=1, padx=10)
+
+        customtkinter.CTkButton(
+            bottom_buttons,
+            text="Re-randomize",
+            fg_color="#ffc107",
+            text_color="black",
+            hover_color="#e0a800",
+            font=("Arial", 18, "bold"),
+            width=150,
+            height=40,
+            command=lambda: controller.frames["InputPage"].assign_tasks()
+        ).grid(row=0, column=2, padx=10)
+
+        customtkinter.CTkButton(
+            bottom_buttons,
+            text="Exit",
+            fg_color="#d9534f",
+            hover_color="#c82333",
+            font=("Arial", 18, "bold"),
+            width=150,
+            height=40,
+            command=controller.quit
+        ).grid(row=0, column=3, padx=10)
+
+    #Deadline Popup Window
+    def open_deadline_popup(self):
+        popup = customtkinter.CTkToplevel(self)
+        popup.title("Set Deadline")
+        popup.geometry("300x200")
+        popup.grab_set()
+
+        customtkinter.CTkLabel(
+            popup,
+            text="Choose Deadline",
+            font=("Arial", 18, "bold")
+        ).pack(pady=15)
+
+        date_entry = customtkinter.CTkEntry(
+            popup,
+            placeholder_text="MM/DD/YYYY",
+            width=180
+        )
+        date_entry.pack(pady=10)
+        #Error handling for the deadline input
+        def confirm_deadline():
+            deadline = date_entry.get().strip()
+            if not deadline:
+                messagebox.showerror("Error", "Deadline cannot be empty.", parent=popup)
+                return
+            try:
+                datetime.strptime(deadline, '%m/%d/%Y')
+                self.deadline_value = deadline
+                self.deadline_label.configure(text=f"Deadline: {deadline}")
+                popup.destroy()
+            except ValueError:
+                messagebox.showerror("Error", "Invalid date format. Please use MM/DD/YYYY.", parent=popup)
+
+        customtkinter.CTkButton(
+            popup,
+            text="Confirm",
+            width=140,
+            height=32,
+            font=("Arial", 15, "bold"),
+            fg_color="#1ABC9C",
+            hover_color="#16A085",
+            text_color="black",
+            command=confirm_deadline
+        ).pack(pady=15)
 
     def clear_table(self):
-        # Destroy all widgets inside the scrollable frame
+        #Destroy all widgets inside the scrollable frame
         for widget in self.result_frame.winfo_children():
             widget.destroy()
 
     def populate_table(self, assignments):
         self.clear_table()
-        self.assignments = assignments # Store for saving
+        self.assignments = assignments
 
-        # Group members by group name
+        #Group members by group name
         grouped_results = {}
         for group, member, task in assignments:
-            if group not in grouped_results:
-                grouped_results[group] = []
-            grouped_results[group].append((member, task))
+            grouped_results.setdefault(group, []).append((member, task))
 
-        # Sort groups (e.g., "Group 1", "Group 2", ...)
+        #Sort groups ("Group 1", "Group 2")
         sorted_groups = sorted(grouped_results.keys(), key=lambda g: (g.split()[0], int(g.split()[1]) if g.startswith("Group") and g.split()[1].isdigit() else g))
 
         for group_name in sorted_groups:
-            # Add group header
+            #Add group header
             group_label = customtkinter.CTkLabel(self.result_frame, text=f"{group_name}:", font=("Arial", 20, "bold"))
             group_label.pack(anchor="w", padx=10, pady=(15, 5))
 
             for member, task in grouped_results[group_name]:
-                task_display = task if task else "No task assigned"
-                member_label = customtkinter.CTkLabel(self.result_frame, text=f"  - {member} → {task_display}", font=("Arial", 16))
+                task_display = task if task else "Task to be Determined"
+                member_label = customtkinter.CTkLabel(
+                    self.result_frame,
+                    text=f"  - {member} → {task_display}",
+                    font=("Arial", 16)
+                )
                 member_label.pack(anchor="w", padx=20)
-        
+
     def save_results(self):
         file_path = filedialog.asksaveasfilename(
             defaultextension=".json",
@@ -313,14 +486,19 @@ class ResultPage(customtkinter.CTkFrame):
         if not file_path:
             return
 
-        assignments_data = []
+        data = []
         for group, member, task in self.assignments:
-            assignment = {"Group": group, "Member": member, "Task": task}
-            assignments_data.append(assignment)
+            entry = {
+                "Group": group,
+                "Member": member,
+                "Task": task,
+                "Deadline": self.deadline_value if self.deadline_value else "Not set"
+            }
+            data.append(entry)
 
         try:
             with open(file_path, "w") as f:
-                json.dump(assignments_data, f, indent=4)
+                json.dump(data, f, indent=4)
             messagebox.showinfo("Success", "Assignments saved successfully as a JSON file!")
         except Exception as e:
             messagebox.showerror("Error", f"Failed to save file: {e}")
@@ -329,3 +507,5 @@ class ResultPage(customtkinter.CTkFrame):
 if __name__ == "__main__":
     app = GroupWiseApp()
     app.mainloop()
+    app.mainloop()
+
