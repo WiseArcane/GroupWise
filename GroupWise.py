@@ -269,18 +269,18 @@ class InputPage(customtkinter.CTkFrame):
                 random.shuffle(tasks)
                 member_tasks = {member: [] for member in group_members}
 
-                # If there are more members than tasks, iterate through members to ensure everyone gets a task.
+                #If there are more members than tasks, iterate through members to ensure everyone gets a task.
                 if len(group_members) > len(tasks):
                     for i, member in enumerate(group_members):
                         task_to_assign = tasks[i % len(tasks)]
                         member_tasks[member].append(task_to_assign)
                 else:
-                    # If there are more (or equal) tasks than members, iterate through tasks to distribute them all.
+                    #If there are more (or equal) tasks than members, iterate through tasks to distribute them all.
                     for i, task in enumerate(tasks):
                         member_to_assign = group_members[i % len(group_members)]
                         member_tasks[member_to_assign].append(task)
 
-                # Format for final list
+                #Format for final list
                 for member, assigned_tasks in member_tasks.items():
                     tasks_str = ", ".join(assigned_tasks) if assigned_tasks else ""
                     assignments.append((group_name, member, tasks_str))
@@ -290,13 +290,13 @@ class InputPage(customtkinter.CTkFrame):
             random.shuffle(tasks)
             member_tasks = {member: [] for member in members}
             
-            # If there are more members than tasks, iterate through members to ensure everyone gets a task.
+            #If there are more members than tasks, iterate through members to ensure everyone gets a task.
             if len(members) > len(tasks):
                 for i, member in enumerate(members):
                     task_to_assign = tasks[i % len(tasks)]
                     member_tasks[member].append(task_to_assign)
             else:
-                # If there are more (or equal) tasks than members, iterate through tasks to distribute them all.
+                #If there are more (or equal) tasks than members, iterate through tasks to distribute them all.
                 for i, task in enumerate(tasks):
                     member_to_assign = members[i % len(members)]
                     member_tasks[member_to_assign].append(task)
@@ -313,8 +313,8 @@ class ResultPage(customtkinter.CTkFrame):
     def __init__(self, parent, controller, **kwargs):
         super().__init__(parent, **kwargs)
         self.controller = controller
-        self.assignments = []  # Store assignment data
-        self.deadline_value = None  # Store selected deadline
+        self.assignments = []  #Store assignment data
+        self.deadline_value = None  #Store selected deadline
 
         #Central frame
         main_frame = customtkinter.CTkFrame(self, fg_color="transparent")
