@@ -269,25 +269,37 @@ class InputPage(customtkinter.CTkFrame):
                 random.shuffle(tasks)
                 member_tasks = {member: [] for member in group_members}
 
-                #Assign all tasks to members within this group
-                for i, task in enumerate(tasks):
-                    member_in_group = group_members[i % len(group_members)]
-                    member_tasks[member_in_group].append(task)
+                # If there are more members than tasks, iterate through members to ensure everyone gets a task.
+                if len(group_members) > len(tasks):
+                    for i, member in enumerate(group_members):
+                        task_to_assign = tasks[i % len(tasks)]
+                        member_tasks[member].append(task_to_assign)
+                else:
+                    # If there are more (or equal) tasks than members, iterate through tasks to distribute them all.
+                    for i, task in enumerate(tasks):
+                        member_to_assign = group_members[i % len(group_members)]
+                        member_tasks[member_to_assign].append(task)
 
                 # Format for final list
                 for member, assigned_tasks in member_tasks.items():
                     tasks_str = ", ".join(assigned_tasks) if assigned_tasks else ""
                     assignments.append((group_name, member, tasks_str))
         else:
-            #Original logic for when no groups are specified
+            #Logic for when no groups are specified
             random.shuffle(members)
             random.shuffle(tasks)
             member_tasks = {member: [] for member in members}
             
-            #Assign all tasks across all members
-            for i, task in enumerate(tasks):
-                member = members[i % len(members)]
-                member_tasks[member].append(task)
+            # If there are more members than tasks, iterate through members to ensure everyone gets a task.
+            if len(members) > len(tasks):
+                for i, member in enumerate(members):
+                    task_to_assign = tasks[i % len(tasks)]
+                    member_tasks[member].append(task_to_assign)
+            else:
+                # If there are more (or equal) tasks than members, iterate through tasks to distribute them all.
+                for i, task in enumerate(tasks):
+                    member_to_assign = members[i % len(members)]
+                    member_tasks[member_to_assign].append(task)
 
             for member, assigned_tasks in member_tasks.items():
                 tasks_str = ", ".join(assigned_tasks) if assigned_tasks else ""
@@ -408,7 +420,7 @@ class ResultPage(customtkinter.CTkFrame):
             width=180
         )
         date_entry.pack(pady=10)
-
+        #Error handling for the deadline input
         def confirm_deadline():
             deadline = date_entry.get().strip()
             if not deadline:
