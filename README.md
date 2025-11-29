@@ -30,3 +30,5 @@ Install dependencies before running:
 pip install Pillow
 
 pip install customtkinter
+
+pip install tkcalendar
