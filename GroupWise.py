@@ -181,6 +181,9 @@ class WelcomePage(customtkinter.CTkFrame):
         self.main_frame.grid_rowconfigure((0, 4), weight=1)
         self.main_frame.grid_columnconfigure(0, weight=1)
 
+        # Always show the title text
+        customtkinter.CTkLabel(self.main_frame, text="Welcome to GroupWise!", font=("Arial", 40, "bold")).grid(row=2, column=0, pady=(0,10))
+
         self.logo_image = None
         try:
             image_path = resource_path(os.path.join("logo", "WelcomePageLogo.jpg"))
@@ -195,20 +198,15 @@ class WelcomePage(customtkinter.CTkFrame):
                 self.logo_image = customtkinter.CTkImage(light_image=img, dark_image=img, size=(new_width, new_height))
                 logo_label = customtkinter.CTkLabel(self.main_frame, image=self.logo_image, text="")
                 logo_label.grid(row=1, column=0, pady=(20, 10))
-            else:
-                customtkinter.CTkLabel(self.main_frame, text="GroupWise!", font=("Courier New", 50, "bold")).grid(row=1, column=0, pady=(20,10))
         except Exception as e:
-            customtkinter.CTkLabel(self.main_frame, text="GroupWise!", font=("Courier New", 50, "bold")).grid(row=1, column=0, pady=(20,10))
+            pass #Logo is optional, do not show an error if it fails to load
 
-        self.subtitle_label = customtkinter.CTkLabel(self.main_frame, text="Group work just got smarter!", font=("Courier New", 24, "italic"), text_color="gray")
-        self.subtitle_label.grid(row=3, column=0, pady=(0,5))
-
-        description_text = "The intelligent tool to randomly assign members to groups and distribute tasks evenly."
-        customtkinter.CTkLabel(self.main_frame, text=description_text, font=("Courier New", 16), text_color="lightgray", wraplength=500, justify="center").grid(row=4, column=0, pady=(10,30))
+        self.subtitle_label = customtkinter.CTkLabel(self.main_frame, text="Group work just got smarter!", font=("Arial", 24, "italic"), text_color="gray")
+        self.subtitle_label.grid(row=3, column=0, pady=(10,30))
         
         customtkinter.CTkButton(self.main_frame, 
                                 text="GET STARTED", 
-                                font=("Courier New", 22, "bold"), 
+                                font=("Arial", 20, "bold"), 
                                 command=lambda: controller.show_frame("InputPage"), 
                                 width=250, 
                                 height=70,
@@ -228,8 +226,8 @@ class InputPage(customtkinter.CTkFrame):
         main_frame.pack(expand=True, fill="both", padx=20, pady=20)
 
         #Header
-        customtkinter.CTkLabel(main_frame, text="Configure Groups", font=("Courier New", 28, "bold")).pack(pady=(10,0))
-        customtkinter.CTkLabel(main_frame, text="One entry per line.", font=("Courier New", 16, "italic"), text_color="gray").pack(pady=(0,15))
+        customtkinter.CTkLabel(main_frame, text="Configure Groups", font=("Arial", 28, "bold")).pack(pady=(10,0))
+        customtkinter.CTkLabel(main_frame, text="One entry per line.", font=("Arial", 16, "italic"), text_color="gray").pack(pady=(0,15))
 
         #Input Container
         input_frame = customtkinter.CTkFrame(main_frame, fg_color="transparent")
@@ -240,10 +238,10 @@ class InputPage(customtkinter.CTkFrame):
         member_col.pack(side="left", expand=True, fill="both", padx=10)
         
         #Member Header with Counter
-        self.member_label = customtkinter.CTkLabel(member_col, text="Members (0)", font=("Courier New", 24, "bold"))
+        self.member_label = customtkinter.CTkLabel(member_col, text="Members (0)", font=("Arial", 24, "bold"))
         self.member_label.pack()
         
-        self.member_text = customtkinter.CTkTextbox(member_col, font=("Courier New", 16))
+        self.member_text = customtkinter.CTkTextbox(member_col, font=("Arial", 16))
         self.member_text.pack(expand=True, fill="both", pady=5)
         self.member_text.bind("<Button-3>", self.show_context_menu)
         self.member_text.bind("<KeyRelease>", self.update_counters) # UPGRADE: Real-time counting
@@ -253,10 +251,10 @@ class InputPage(customtkinter.CTkFrame):
         task_col.pack(side="right", expand=True, fill="both", padx=10)
 
         #Task Header with Counter
-        self.task_label = customtkinter.CTkLabel(task_col, text="Tasks (0)", font=("Courier New", 24, "bold"))
+        self.task_label = customtkinter.CTkLabel(task_col, text="Tasks (0)", font=("Arial", 24, "bold"))
         self.task_label.pack()
 
-        self.task_text = customtkinter.CTkTextbox(task_col, font=("Courier New", 16))
+        self.task_text = customtkinter.CTkTextbox(task_col, font=("Arial", 16))
         self.task_text.pack(expand=True, fill="both", pady=5)
         self.task_text.bind("<Button-3>", self.show_context_menu)
         self.task_text.bind("<KeyRelease>", self.update_counters) #UPGRADE: Real-time counting
@@ -266,20 +264,20 @@ class InputPage(customtkinter.CTkFrame):
         options_frame.pack(pady=10)
 
         #Number of Groups
-        customtkinter.CTkLabel(options_frame, text="Number of Groups:", font=("Courier New", 16, "bold")).grid(row=0, column=0, padx=5)
-        self.group_entry = customtkinter.CTkEntry(options_frame, width=100, font=("Courier New", 16), placeholder_text="Required")
+        customtkinter.CTkLabel(options_frame, text="Number of Groups:", font=("Arial", 16, "bold")).grid(row=0, column=0, padx=5)
+        self.group_entry = customtkinter.CTkEntry(options_frame, width=100, font=("Arial", 16), placeholder_text="Required")
         self.group_entry.grid(row=0, column=1, padx=5)
 
         #Subject
-        customtkinter.CTkLabel(options_frame, text="Subject:", font=("Courier New", 16, "bold")).grid(row=0, column=2, padx=5)
-        self.subject_entry = customtkinter.CTkEntry(options_frame, width=200, font=("Courier New", 16), placeholder_text="Optional")
+        customtkinter.CTkLabel(options_frame, text="Subject:", font=("Arial", 16, "bold")).grid(row=0, column=2, padx=5)
+        self.subject_entry = customtkinter.CTkEntry(options_frame, width=200, font=("Arial", 16), placeholder_text="Optional")
         self.subject_entry.grid(row=0, column=3, padx=5)
 
         #Action Buttons
         button_frame = customtkinter.CTkFrame(main_frame, fg_color="transparent")
         button_frame.pack(pady=20)
         
-        btn_style = {"font": ("Courier New", 16, "bold"), "width": 140, "height": 45}
+        btn_style = {"font": ("Arial", 16, "bold"), "width": 140, "height": 45}
 
         customtkinter.CTkButton(button_frame, text="< Back", command=lambda: controller.show_frame("WelcomePage"), 
                                 fg_color="#6c757d", hover_color="#5a6268", **btn_style).grid(row=0, column=0, padx=10)
@@ -438,7 +436,7 @@ class InputPage(customtkinter.CTkFrame):
         groups_input = self.group_entry.get().strip()
         subject_input = self.subject_entry.get().strip()
 
-        # Subject validation
+        #Subject validation
         if len(subject_input) > 30:
             messagebox.showerror("Input Error", "Subject cannot be more than 30 characters long.")
             return
@@ -498,28 +496,28 @@ class ResultPage(customtkinter.CTkFrame):
         header_frame = customtkinter.CTkFrame(main_frame, fg_color="transparent")
         header_frame.pack(fill="x", pady=(0, 10))
 
-        customtkinter.CTkLabel(header_frame, text="Results", font=("Courier New", 32, "bold")).pack()
+        customtkinter.CTkLabel(header_frame, text="Results", font=("Arial", 32, "bold")).pack()
         
-        self.subject_label = customtkinter.CTkLabel(header_frame, text="", font=("Courier New", 20, "italic"), text_color="#3498DB")
+        self.subject_label = customtkinter.CTkLabel(header_frame, text="", font=("Arial", 20, "italic"), text_color="#3498DB")
         self.subject_label.pack(pady=(5, 5))
 
         #UPGRADE: Stats Bar
-        self.stats_label = customtkinter.CTkLabel(header_frame, text="Stats: -", font=("Courier New", 14), text_color="gray")
+        self.stats_label = customtkinter.CTkLabel(header_frame, text="Stats: -", font=("Arial", 14), text_color="gray")
         self.stats_label.pack(pady=(0,10))
 
         #Deadline & Tools
         tools_frame = customtkinter.CTkFrame(main_frame, fg_color="transparent")
         tools_frame.pack(pady=(0, 10))
 
-        self.deadline_label = customtkinter.CTkLabel(tools_frame, text="Deadline: Not set", font=("Courier New", 16))
+        self.deadline_label = customtkinter.CTkLabel(tools_frame, text="Deadline: Not set", font=("Arial", 16))
         self.deadline_label.grid(row=0, column=0, padx=15)
 
         customtkinter.CTkButton(tools_frame, text="Set Deadline", command=self.open_deadline_popup, 
-                                font=("Courier New", 14), width=120, height=30, fg_color="#1ABC9C", hover_color="#16A085", text_color="black").grid(row=0, column=1, padx=5)
+                                font=("Arial", 14), width=120, height=30, fg_color="#1ABC9C", hover_color="#16A085", text_color="black").grid(row=0, column=1, padx=5)
 
         #Copy to Clipboard
         customtkinter.CTkButton(tools_frame, text="Copy to Clipboard", command=self.copy_to_clipboard,
-                                font=("Courier New", 14), width=160, height=30, fg_color="#8E44AD", hover_color="#732D91").grid(row=0, column=2, padx=5)
+                                font=("Arial", 14), width=160, height=30, fg_color="#8E44AD", hover_color="#732D91").grid(row=0, column=2, padx=5)
 
         #Results Area
         self.result_frame = CustomScrollableFrame(main_frame)
@@ -529,13 +527,13 @@ class ResultPage(customtkinter.CTkFrame):
         bottom_buttons = customtkinter.CTkFrame(main_frame, fg_color="transparent")
         bottom_buttons.pack(pady=10)
 
-        btn_style = {"font": ("Courier New", 18, "bold"), "width": 160, "height": 50}
+        btn_style = {"font": ("Arial", 18, "bold"), "width": 160, "height": 50}
 
         customtkinter.CTkButton(bottom_buttons, text="Edit / Back", command=lambda: controller.show_frame("InputPage"), 
                                 fg_color="#6c757d", hover_color="#5a6268", **btn_style).grid(row=0, column=0, padx=10)
 
         #Save Menu
-        self.save_btn = customtkinter.CTkButton(bottom_buttons, text="Save As...", command=self.save_results, 
+        self.save_btn = customtkinter.CTkButton(bottom_buttons, text="Save As", command=self.save_results, 
                                 fg_color="#28a745", hover_color="#218838", text_color="black", **btn_style)
         self.save_btn.grid(row=0, column=1, padx=10)
 
@@ -549,7 +547,7 @@ class ResultPage(customtkinter.CTkFrame):
         popup.grab_set()
         popup.resizable(False, False)
 
-        customtkinter.CTkLabel(popup, text="Select a Deadline", font=("Courier New", 16, "bold")).pack(pady=10)
+        customtkinter.CTkLabel(popup, text="Select a Deadline", font=("Arial", 16, "bold")).pack(pady=10)
 
         cal = Calendar(popup, selectmode='day', date_pattern='mm/dd/y', background="white",
                        foreground='black', headersbackground="white", normalbackground="white", 
@@ -594,7 +592,7 @@ class ResultPage(customtkinter.CTkFrame):
             
             header = customtkinter.CTkFrame(card, height=30, corner_radius=0)
             header.pack(fill="x")
-            customtkinter.CTkLabel(header, text=group_name, font=("Courier New", 18, "bold")).pack(side="left", padx=10, pady=2)
+            customtkinter.CTkLabel(header, text=group_name, font=("Arial", 18, "bold")).pack(side="left", padx=10, pady=2)
             
             content_frame = customtkinter.CTkFrame(card, fg_color="transparent")
             content_frame.pack(fill="x", padx=10, pady=10)
@@ -602,8 +600,8 @@ class ResultPage(customtkinter.CTkFrame):
             for member, task in grouped_results[group_name]:
                 row = customtkinter.CTkFrame(content_frame, fg_color="transparent")
                 row.pack(fill="x", pady=2, anchor="w")
-                customtkinter.CTkLabel(row, text=f"• {member}", font=("Courier New", 16, "bold"), anchor="w", width=150).pack(side="left")
-                customtkinter.CTkLabel(row, text=f"→ {task}", font=("Courier New", 16), text_color="#ccc", anchor="w").pack(side="left", padx=(5,0))
+                customtkinter.CTkLabel(row, text=f"• {member}", font=("Arial", 16, "bold"), anchor="w", width=150).pack(side="left")
+                customtkinter.CTkLabel(row, text=f"→ {task}", font=("Arial", 16), text_color="#ccc", anchor="w").pack(side="left", padx=(5,0))
 
     def _get_formatted_results(self):
         #Groups and sorts assignments logic for consistent output.
