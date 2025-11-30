@@ -65,25 +65,12 @@ class GroupWiseApp(customtkinter.CTk):
         self.animation_in_progress = True
         current_frame = self.frames[self.current_frame_name]
 
-        #fade animation for Input -> Result page transition to avoid lag
-        if self.current_frame_name == "InputPage" and page_name == "ResultPage":
-            #Place new frame underneath and start fade
-            new_frame.place(relx=0, rely=0, relwidth=1, relheight=1)
-            new_frame.tkraise()
-            #Create a temporary overlay on the current frame to fade out
-            fade_overlay = customtkinter.CTkFrame(current_frame, fg_color=current_frame.cget("fg_color"))
-            fade_overlay.place(relx=0, rely=0, relwidth=1, relheight=1)
-            self._animate_fade(fade_overlay, new_frame, 1.0)
-            self.current_frame_name = page_name #Set current frame name immediately
-            return #Return to let the animation run
-        
         #Determine slide direction
         page_order = ["WelcomePage", "InputPage", "ResultPage"]
         current_index = page_order.index(self.current_frame_name)
         new_index = page_order.index(page_name)
         
         direction = 1 if new_index > current_index else -1
-
         new_frame.place(relx=direction, rely=0, relwidth=1, relheight=1)
         new_frame.tkraise()
 
@@ -91,13 +78,13 @@ class GroupWiseApp(customtkinter.CTk):
         self.current_frame_name = page_name
 
     def _animate_slide(self, current_frame, new_frame, direction, progress):
-        progress += 0.04
+        progress += 0.03
         if progress >= 1.0:
             current_frame.place_forget()
             new_frame.place(relx=0, rely=0, relwidth=1, relheight=1)
             self.animation_in_progress = False
             return
-
+        
         current_frame.place(relx=-direction * progress, rely=0, relwidth=1, relheight=1)
         new_frame.place(relx=direction * (1 - progress), rely=0, relwidth=1, relheight=1)
         self.after(10, lambda: self._animate_slide(current_frame, new_frame, direction, progress))
@@ -200,8 +187,8 @@ class WelcomePage(customtkinter.CTkFrame):
                                 command=lambda: controller.show_frame("InputPage"), 
                                 width=250, 
                                 height=70,
-                                fg_color="#4CAF50",
-                                hover_color="#45A049", 
+                                fg_color="#8E44AD",
+                                hover_color="#732D91", 
                                 text_color="white"
                                 ).grid(row=5, column=0, pady=(20, 40))
 
@@ -529,7 +516,7 @@ class ResultPage(customtkinter.CTkFrame):
         customtkinter.CTkButton(tools_frame, text="Set Deadline", command=self.open_deadline_popup, 
                                 font=("Courier New", 14), width=120, height=30, fg_color="#1ABC9C", hover_color="#16A085", text_color="black").grid(row=0, column=1, padx=5)
 
-        #UPGRADE: Copy to Clipboard
+        #Copy to Clipboard
         customtkinter.CTkButton(tools_frame, text="Copy to Clipboard", command=self.copy_to_clipboard,
                                 font=("Courier New", 14), width=160, height=30, fg_color="#8E44AD", hover_color="#732D91").grid(row=0, column=2, padx=5)
 
@@ -606,7 +593,7 @@ class ResultPage(customtkinter.CTkFrame):
             
             header = customtkinter.CTkFrame(card, height=30, corner_radius=0)
             header.pack(fill="x")
-            customtkinter.CTkLabel(header, text=group_name, font=("Courier New", 18, "bold")).pack(pady=2)
+            customtkinter.CTkLabel(header, text=group_name, font=("Courier New", 18, "bold")).pack(side="left", padx=10, pady=2)
             
             content_frame = customtkinter.CTkFrame(card, fg_color="transparent")
             content_frame.pack(fill="x", padx=10, pady=10)
@@ -618,7 +605,6 @@ class ResultPage(customtkinter.CTkFrame):
                 customtkinter.CTkLabel(row, text=f"→ {task}", font=("Courier New", 16), text_color="#ccc", anchor="w").pack(side="left", padx=(5,0))
 
     def copy_to_clipboard(self):
-        """UPGRADE: Copies formatted text to system clipboard"""
         if not self.assignments:
             return
         
