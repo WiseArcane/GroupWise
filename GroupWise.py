@@ -438,6 +438,11 @@ class InputPage(customtkinter.CTkFrame):
         groups_input = self.group_entry.get().strip()
         subject_input = self.subject_entry.get().strip()
 
+        # Subject validation
+        if len(subject_input) > 30:
+            messagebox.showerror("Input Error", "Subject cannot be more than 30 characters long.")
+            return
+
         #Validation
         if not members:
             messagebox.showerror("Error", "Please enter at least one member name.")
@@ -600,6 +605,16 @@ class ResultPage(customtkinter.CTkFrame):
                 customtkinter.CTkLabel(row, text=f"• {member}", font=("Courier New", 16, "bold"), anchor="w", width=150).pack(side="left")
                 customtkinter.CTkLabel(row, text=f"→ {task}", font=("Courier New", 16), text_color="#ccc", anchor="w").pack(side="left", padx=(5,0))
 
+    def _get_formatted_results(self):
+        #Groups and sorts assignments logic for consistent output.
+        grouped_results = {}
+        for group, member, task in self.assignments:
+            grouped_results.setdefault(group, []).append((member, task))
+            
+        sorted_groups = sorted(grouped_results.keys(), key=lambda g: (g.split()[0], int(g.split()[1]) if g.startswith("Group") and g.split()[1].isdigit() else g))
+
+        return grouped_results, sorted_groups
+
     def copy_to_clipboard(self):
         if not self.assignments:
             return
@@ -607,12 +622,7 @@ class ResultPage(customtkinter.CTkFrame):
         text_output = f"Subject: {self.subject_value}\n" if self.subject_value else ""
         text_output += f"Deadline: {self.deadline_value}\n\n" if self.deadline_value else "\n"
         
-        grouped_results = {}
-        for group, member, task in self.assignments:
-            grouped_results.setdefault(group, []).append((member, task))
-            
-        sorted_groups = sorted(grouped_results.keys(), key=lambda g: (g.split()[0], int(g.split()[1]) if g.startswith("Group") and g.split()[1].isdigit() else g))
-
+        grouped_results, sorted_groups = self._get_formatted_results()
         for group in sorted_groups:
             text_output += f"[{group}]\n"
             for member, task in grouped_results[group]:
@@ -651,13 +661,7 @@ class ResultPage(customtkinter.CTkFrame):
                     f.write(f"Subject: {self.subject_value or 'N/A'}\n")
                     f.write(f"Deadline: {self.deadline_value or 'N/A'}\n")
                     f.write("-" * 30 + "\n\n")
-                    
-                    grouped_results = {}
-                    for group, member, task in self.assignments:
-                        grouped_results.setdefault(group, []).append((member, task))
-                    
-                    sorted_groups = sorted(grouped_results.keys(), key=lambda g: (g.split()[0], int(g.split()[1]) if g.startswith("Group") and g.split()[1].isdigit() else g))
-
+                    grouped_results, sorted_groups = self._get_formatted_results()
                     for group in sorted_groups:
                         f.write(f"{group}\n")
                         for member, task in grouped_results[group]:
