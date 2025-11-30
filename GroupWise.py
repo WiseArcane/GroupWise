@@ -299,7 +299,6 @@ class InputPage(customtkinter.CTkFrame):
             self.populate_from_json(file_path)
 
     def import_csv(self, file_path):
-        """UPGRADE: Reads a CSV file with 'Members' and 'Tasks' columns"""
         members = []
         tasks = []
         try:
@@ -584,7 +583,7 @@ class ResultPage(customtkinter.CTkFrame):
 
         sorted_groups = sorted(grouped_results.keys(), key=lambda g: (g.split()[0], int(g.split()[1]) if g.startswith("Group") and g.split()[1].isdigit() else g))
 
-        # Update stats
+        #Update stats
         self.stats_label.configure(text=f"Total: {total_members} Members | {len(sorted_groups)} Groups")
 
         for group_name in sorted_groups:
