@@ -10,17 +10,42 @@ from datetime import datetime
 from PIL import Image
 from tkcalendar import Calendar
 
-#Set default color theme
+#color theme
 customtkinter.set_default_color_theme("blue")
 customtkinter.set_appearance_mode("Dark")
 
 def resource_path(relative_path):
-    """ Get absolute path to resource, works for dev and for PyInstaller """
     try:
         base_path = sys._MEIPASS
     except Exception:
         base_path = os.path.dirname(os.path.abspath(__file__))
     return os.path.join(base_path, relative_path)
+
+def perform_assignment(members, tasks, num_groups):
+    #Core logic for assigning members and tasks to groups.
+    random.shuffle(members)
+    
+    groups = {f"Group {i+1}": [] for i in range(num_groups)}
+    for i, member in enumerate(members):
+        groups[f"Group {i % num_groups + 1}"].append(member)
+
+    assignments = []
+    for group_name, group_members in groups.items():
+        if not group_members: continue
+        
+        random.shuffle(tasks)
+        member_tasks = {member: [] for member in group_members}
+
+        count = max(len(tasks), len(group_members))
+        for i in range(count):
+            m = group_members[i % len(group_members)]
+            t = tasks[i % len(tasks)]
+            member_tasks[m].append(t)
+
+        for member, assigned_tasks in member_tasks.items():
+            tasks_str = ", ".join(assigned_tasks)
+            assignments.append((group_name, member, tasks_str))
+    return assignments
 
 class GroupWiseApp(customtkinter.CTk):
     def __init__(self):
@@ -270,7 +295,7 @@ class InputPage(customtkinter.CTkFrame):
                                 fg_color="#1f538d", hover_color="#14375e", **btn_style).grid(row=0, column=3, padx=10)
 
     def update_counters(self, event=None):
-        """Updates the labels with the line count of the text boxes"""
+        #Updates the labels with the line count of the text boxes
         members = [line for line in self.member_text.get("1.0", "end").strip().split("\n") if line.strip()]
         tasks = [line for line in self.task_text.get("1.0", "end").strip().split("\n") if line.strip()]
         
@@ -446,36 +471,8 @@ class InputPage(customtkinter.CTkFrame):
         if num_groups > len(members):
             messagebox.showerror("Error", "Number of groups cannot exceed the number of members.")
             return
-
-        assignments = []
         
-        #Logic
-        random.shuffle(members)
-        
-        groups = {f"Group {i+1}": [] for i in range(num_groups)}
-        for i, member in enumerate(members):
-            groups[f"Group {i % num_groups + 1}"].append(member)
-
-        for group_name, group_members in groups.items():
-            if not group_members: continue
-            
-            random.shuffle(tasks)
-            member_tasks = {member: [] for member in group_members}
-
-            targets = tasks if len(tasks) >= len(group_members) else group_members
-            source = group_members if len(tasks) >= len(group_members) else tasks
-            
-            count = max(len(tasks), len(group_members))
-            for i in range(count):
-                m = group_members[i % len(group_members)]
-                t = tasks[i % len(tasks)]
-                member_tasks[m].append(t)
-
-            for member, assigned_tasks in member_tasks.items():
-                tasks_str = ", ".join(assigned_tasks)
-                assignments.append((group_name, member, tasks_str))
-
-            random.shuffle(tasks)
+        assignments = perform_assignment(members, tasks, num_groups)
 
         result_page.populate_table(assignments, subject_input, len(members), len(tasks))
         self.controller.show_frame("ResultPage")
